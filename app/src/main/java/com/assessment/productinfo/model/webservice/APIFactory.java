@@ -16,17 +16,34 @@
 
 package com.assessment.productinfo.model.webservice;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+
 public class APIFactory {
 
-  public static APIService create() {
-    Retrofit retrofit = new Retrofit.Builder().baseUrl("http://206.189.128.26/api/addNewProduct/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-        .build();
-    return retrofit.create(APIService.class);
-  }
+    public static String URL_BASE = "http://206.189.128.26/api/";
+
+    public static APIService create() {
+
+        Retrofit retrofit = null;
+        try {
+            retrofit = new Retrofit.Builder().baseUrl(URL_BASE)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return retrofit.create(APIService.class);
+    }
 }

@@ -24,6 +24,7 @@ import com.assessment.productinfo.model.webservice.ProductAddResponse;
 
 import org.reactivestreams.Subscription;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -32,6 +33,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class ProductActionActivity extends AppCompatActivity {
@@ -43,15 +47,11 @@ public class ProductActionActivity extends AppCompatActivity {
     public String mobile_number = "7350346623";
     private APIService apiService;
     private MainApplication mainApplication;
-    private boolean isUploaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_action);
-        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-                .penaltyLog()
-                .build());
 
         appDatabase = DatabaseClient.getInstance(this).getAppDatabase();
         progressDialog = new ProgressDialog(this);
@@ -73,6 +73,7 @@ public class ProductActionActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 apiCallSyncProduct();
+
             }
         });
     }
@@ -81,10 +82,7 @@ public class ProductActionActivity extends AppCompatActivity {
     public void apiCallSyncProduct() {
 
         try {
-            progressDialog.show();
-            //first get all products
-//            while (true)
-//            {
+                progressDialog.show();
                 List<ProductTable> list = appDatabase.productDao().getAllProducts();
                 Log.d("Product sync list size: ", String.valueOf(list.size()));
                 if(list.size()>0)
@@ -92,21 +90,15 @@ public class ProductActionActivity extends AppCompatActivity {
                     for (ProductTable iterateProduct : list)
                     {
                         Log.d("Product sync iterateProduct: ", String.valueOf(iterateProduct.getProduct_name()));
-                        if(!syncEachProduct(iterateProduct));
-                        {
-                            Toast.makeText(ProductActionActivity.this, "Error - Sync Failed ", Toast.LENGTH_SHORT).show();
-                            progressDialog.dismiss();
-                            return;
-                        }
+                        syncEachProduct(iterateProduct);
                     }
                     Toast.makeText(ProductActionActivity.this, "Data sync successfully", Toast.LENGTH_SHORT).show();
-
+                    progressDialog.dismiss();
                 }
                 else {
                     Toast.makeText(ProductActionActivity.this, "Data not available to sync", Toast.LENGTH_SHORT).show();
                     progressDialog.dismiss();
                 }
-            //}
         } catch (Exception e) {
             Toast.makeText(ProductActionActivity.this, "Error - Sync Failed ", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
@@ -116,9 +108,8 @@ public class ProductActionActivity extends AppCompatActivity {
 
     }
     @SuppressLint("LongLogTag")
-    public boolean syncEachProduct(ProductTable productTable)
+    public void syncEachProduct(ProductTable productTable)
     {
-        isUploaded=false;
         apiService.addProductApiCall(productTable.getProduct_name(),productTable.getProduct_desc(),productTable.getProduct_quantity(),
                 productTable.getProduct_price(),mobile_number)
                 .subscribeOn(mainApplication.subscribeScheduler())
@@ -130,9 +121,8 @@ public class ProductActionActivity extends AppCompatActivity {
                         try {
                             if(response.getResults().getStatus().equalsIgnoreCase("1"))
                             {
-                                Log.d("Product sync iterateProduct response: ", String.valueOf(response.getResults().getMsg()));
+                                Log.d("Product sync iterateProduct response: ", String.valueOf(productTable.getProduct_name()+" - "+response.getResults().getMsg()));
                                 appDatabase.productDao().delete(productTable);
-                                isUploaded = true;
                             }else {
                                 Toast.makeText(ProductActionActivity.this, response.getResults().getMsg().toString(), Toast.LENGTH_SHORT).show();
                             }
@@ -147,6 +137,5 @@ public class ProductActionActivity extends AppCompatActivity {
 
                     }
                 });
-        return isUploaded;
     }
 }

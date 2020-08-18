@@ -11,7 +11,6 @@ import io.reactivex.schedulers.Schedulers;
 public class MainApplication extends Application {
     private APIService apiService;
     private Scheduler scheduler;
-
     private static MainApplication get(Context context) {
         return (MainApplication) context.getApplicationContext();
     }
